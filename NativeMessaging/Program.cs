@@ -18,7 +18,7 @@ public class MyHost : Host
 
     protected override void ProcessReceivedMessage(JsonObject data)
     {
-        Console.WriteLine(data);
+        //Console.WriteLine(data);
         //SendMessage(data);
     }
 }
@@ -51,7 +51,7 @@ class Program
     static string[] AllowedOrigins = new string[] { "chrome-extension://hdhjadldckbhijphjpakflgmdiljfdaa/" };
     static string Description = "Description Goes Here";
 
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         Host = new MyHost();
         Host.SupportedBrowsers.Add(ChromiumBrowser.GoogleChrome);
@@ -70,12 +70,12 @@ class Program
         {
             try
             {
-                Host.Listen();
+                await Host.Listen();
             }
             catch (Exception e)
             {
 
-                Console.WriteLine(e.InnerException);
+                Log.LogMessage(e.Message);
             }
         }
     }

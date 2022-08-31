@@ -20,7 +20,7 @@
         /// <summary>
         /// Activate the logging if set to <see langword="true"/>
         /// </summary>
-        public static bool Active { get; set; } = false;
+        public static bool Active { get; set; } = true;
 
         internal static void LogMessage(string msg)
         {

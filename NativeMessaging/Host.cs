@@ -31,62 +31,65 @@ namespace NativeMessaging
 
             SendConfirmationReceipt = sendConfirmationReceipt;
 
-            ManifestPath 
+            ManifestPath
                 = Path.Combine(
-                    Utils.AssemblyLoadDirectory() ?? "", 
+                    Utils.AssemblyLoadDirectory() ?? "",
                     Hostname + "-manifest.json");
         }
 
         /// <summary>
         /// Starts listening for input.
         /// </summary>
-        public void Listen()
+        public async Task Listen()
         {
             if (!IsRegistered())
             {
                 throw new NotRegisteredWithBrowserException(Hostname);
             }
-                
+
             JsonObject? data;
 
-            while ((data = Read()) != null)
+            while ((data = await Read()) != null)
             {
                 Log.LogMessage(
                     "Data Received:" + JsonSerializer.Serialize(data));
 
                 if (SendConfirmationReceipt)
                 {
-                    SendMessage(new ResponseConfirmation(data).GetJsonObject()!);
+                    await SendMessage(new ResponseConfirmation(data).GetJsonObject()!);
                 }
 
-                ProcessReceivedMessage(data);
+                //ProcessReceivedMessage(data);
             }
         }
 
-        private JsonObject? Read()
+        private async Task<JsonObject?> Read()
         {
             Log.LogMessage("Waiting for Data");
 
-            Stream stdin = Console.OpenStandardInput();
+            Stream inputStream = Console.OpenStandardInput();
 
             byte[] lengthBytes = new byte[4];
-            stdin.Read(lengthBytes, 0, 4);
+            inputStream.Read(lengthBytes, 0, 4);
 
             char[] buffer = new char[BitConverter.ToInt32(lengthBytes, 0)];
 
-            using (StreamReader reader = new StreamReader(stdin))
-                if (reader.Peek() >= 0)
+            using (StreamReader reader = new StreamReader(inputStream))
+                if (!reader.EndOfStream)
                 {
-                    reader.Read(buffer, 0, buffer.Length);
+                    await reader.ReadAsync(buffer, 0, buffer.Length);
                 }
-            return JsonSerializer.Deserialize<JsonObject>(new string(buffer));
+            var res = new string(buffer);
+            if (res != null)
+                return JsonSerializer.Deserialize<JsonObject>(buffer);
+            return null;
         }
 
         /// <summary>
         /// Sends a message to Chrome, note that the message might not be able to reach Chrome if the stdIn / stdOut aren't properly configured (i.e. Process needs to be started by Chrome)
         /// </summary>
         /// <param name="data">A <see cref="JObject"/> containing the data to be sent.</param>
-        public void SendMessage(JsonObject data)
+        public async Task SendMessage(JsonObject data)
         {
             //Log.LogMessage("Sending Message:" + JsonConvert.SerializeObject(data));
 
@@ -97,8 +100,8 @@ namespace NativeMessaging
             stdout.WriteByte((byte)((bytes.Length >> 8) & 0xFF));
             stdout.WriteByte((byte)((bytes.Length >> 16) & 0xFF));
             stdout.WriteByte((byte)((bytes.Length >> 24) & 0xFF));
-            stdout.Write(bytes, 0, bytes.Length);
-            stdout.Flush();
+            await stdout.WriteAsync(bytes, 0, bytes.Length);
+            await stdout.FlushAsync();
         }
 
         /// <summary>
@@ -129,9 +132,9 @@ namespace NativeMessaging
 
                 string manifest = JsonSerializer.Serialize(
                     new Manifest(
-                        Hostname, 
-                        description, 
-                        Utils.AssemblyExecuteablePath(), 
+                        Hostname,
+                        description,
+                        Utils.AssemblyExecuteablePath(),
                         allowedOrigins));
 
                 File.WriteAllText(ManifestPath, manifest);
