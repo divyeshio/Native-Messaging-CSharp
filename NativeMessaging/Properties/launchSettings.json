@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "NativeMessaging": {
+      "commandName": "Project"
+    }
+  }
+}
