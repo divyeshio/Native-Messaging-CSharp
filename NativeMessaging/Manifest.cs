@@ -1,22 +1,23 @@
 ﻿using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace NativeMessaging
 {
     internal class Manifest
     {
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("description")]
+        [JsonPropertyName("description")]
         public string Description { get; set; }
 
-        [JsonProperty("path")]
+        [JsonPropertyName("path")]
         public string ExecuteablePath { get; set; }
 
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get { return "stdio"; } }
 
-        [JsonProperty("allowed_origins")]
+        [JsonPropertyName("allowed_origins")]
         public string[] AllowedOrigins { get; set; }
 
         public Manifest(

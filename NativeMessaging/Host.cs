@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace NativeMessaging
 {
@@ -47,23 +47,23 @@ namespace NativeMessaging
                 throw new NotRegisteredWithBrowserException(Hostname);
             }
                 
-            JObject? data;
+            JsonObject? data;
 
             while ((data = Read()) != null)
             {
                 Log.LogMessage(
-                    "Data Received:" + JsonConvert.SerializeObject(data));
+                    "Data Received:" + JsonSerializer.Serialize(data));
 
                 if (SendConfirmationReceipt)
                 {
-                    SendMessage(new ResponseConfirmation(data).GetJObject()!);
+                    SendMessage(new ResponseConfirmation(data).GetJsonObject()!);
                 }
 
                 ProcessReceivedMessage(data);
             }
         }
 
-        private JObject? Read()
+        private JsonObject? Read()
         {
             Log.LogMessage("Waiting for Data");
 
@@ -79,18 +79,18 @@ namespace NativeMessaging
                 {
                     reader.Read(buffer, 0, buffer.Length);
                 }
-            return JsonConvert.DeserializeObject<JObject>(new string(buffer));
+            return JsonSerializer.Deserialize<JsonObject>(new string(buffer));
         }
 
         /// <summary>
         /// Sends a message to Chrome, note that the message might not be able to reach Chrome if the stdIn / stdOut aren't properly configured (i.e. Process needs to be started by Chrome)
         /// </summary>
         /// <param name="data">A <see cref="JObject"/> containing the data to be sent.</param>
-        public void SendMessage(JObject data)
+        public void SendMessage(JsonObject data)
         {
-            Log.LogMessage("Sending Message:" + JsonConvert.SerializeObject(data));
+            //Log.LogMessage("Sending Message:" + JsonConvert.SerializeObject(data));
 
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(data.ToString(Formatting.None));
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(data));
             Stream stdout = Console.OpenStandardOutput();
 
             stdout.WriteByte((byte)((bytes.Length >> 0) & 0xFF));
@@ -105,7 +105,7 @@ namespace NativeMessaging
         /// Override this method in your extended <see cref="Host"/> to process messages received from Chrome.
         /// </summary>
         /// <param name="data">A <see cref="JObject"/> containing the data received.</param>
-        protected abstract void ProcessReceivedMessage(JObject data);
+        protected abstract void ProcessReceivedMessage(JsonObject data);
 
         #region Chromium Native Messaging Manifest
         /// <summary>
@@ -127,7 +127,7 @@ namespace NativeMessaging
             {
                 Log.LogMessage("Generating Manifest");
 
-                string manifest = JsonConvert.SerializeObject(
+                string manifest = JsonSerializer.Serialize(
                     new Manifest(
                         Hostname, 
                         description, 

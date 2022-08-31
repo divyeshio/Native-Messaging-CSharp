@@ -1,8 +1,6 @@
 ﻿using NativeMessaging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Reflection;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 
 public class MyHost : Host
 {
@@ -18,10 +16,10 @@ public class MyHost : Host
 
     }
 
-    protected override void ProcessReceivedMessage(JObject data)
+    protected override void ProcessReceivedMessage(JsonObject data)
     {
-        //Console.WriteLine(JsonConvert.SerializeObject(data));
-        SendMessage(data);
+        Console.WriteLine(data);
+        //SendMessage(data);
     }
 }
 
@@ -70,7 +68,15 @@ class Program
         }
         else
         {
-            Host.Listen();
+            try
+            {
+                Host.Listen();
+            }
+            catch (Exception e)
+            {
+
+                Console.WriteLine(e.InnerException);
+            }
         }
     }
 }
